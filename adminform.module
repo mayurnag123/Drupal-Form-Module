@@ -1,0 +1,111 @@
+<?php
+
+/**
+ * Implements hook_menu().
+ */
+function adminform_menu() {
+  $items['adminform'] = array(
+    'title' => 'Welcome message',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('adminform_form'),
+    'access arguments' => array('administer users'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  $items['adminform/%'] = array(
+  'page callback' => 'view_content',
+  'page arguments' => array('view_content'),
+  'access arguments' => array('administer users'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+ 
+  return $items;
+}
+
+
+
+
+
+function view_content($values){ 
+  //page view content
+}
+
+function adminform_form_submit($form, &$form_state) {
+    $adminform = $form_state['values']['form_url']; 
+    drupal_goto("/adminform/".$adminform, $_POST);
+}
+
+
+function adminform_form($form, &$form_state) {
+
+$content_value = ajax_content_type();
+$selected = isset($form_state['values']['form_pptype']) ? $form_state['values']['form_pptype'] : key($content_value);
+
+$form['#method'] = 'POST';
+
+  $form['form_url'] = array(
+    '#type' => 'textfield',
+    '#title' => t('URL'),
+    '#required' => TRUE,
+    '#default_value' => 'test',
+  );
+
+
+  $form['form_pptype'] = array(
+  '#title' => t('Content types'),
+  '#type' => 'select',
+  '#options' => $content_value,
+  '#default_value' => variable_get('form_pptype', ''),
+  '#ajax' => array(
+      'callback' => 'ajax_content_type_content',
+      'wrapper' => 'content_type_content',
+    ),
+);
+
+
+$form['content_type_content'] = array(
+    '#type' => 'select',
+    '#multiple' => TRUE,
+    '#size' => 3,
+    '#title' => $content_value[$selected].' Content Type',
+    '#prefix' => '<div id="content_type_content">',
+    '#suffix' => '</div>',
+    '#options' => content_type_content($content_value[$selected]),
+    '#default_value' => isset($form_state['values']['content_type_content']) ? $form_state['values']['content_type_content'] : '',
+  );
+
+
+ $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Submit',
+    );
+
+ return $form;
+}
+
+
+function ajax_content_type_content($form, $form_state){  
+    return $form['content_type_content'];
+}
+
+
+function ajax_content_type(){
+
+
+ $content_type = node_type_get_types();
+foreach($content_type as $key=>$value){
+  $content_value[] = $key; 
+}
+
+return $content_value;
+
+}
+
+function content_type_content($key = 'page'){
+$nodes = node_load_multiple(array(), array('type' => $key));
+foreach($nodes as $value){
+  $returnarray[] = $value->title;
+}
+   return drupal_map_assoc($returnarray);
+    
+}

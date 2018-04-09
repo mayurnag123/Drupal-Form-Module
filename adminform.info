@@ -1,0 +1,4 @@
+name = AdminModule
+Author = Mayur Nag
+description = Custom admin form
+core = 7.x
